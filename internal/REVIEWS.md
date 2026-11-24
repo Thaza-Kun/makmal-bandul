@@ -40,7 +40,7 @@ Decisions made while building from `DESIGN.md` and `internal/`, plus what was ve
 - `trunk build --release` — passes; `dist/` contains the wasm/js/css bundle plus manifest, both icons, SW and both translation files.
 - `trunk build --release --public-url /makmal-bandul/` — passes; generated asset URLs are `/makmal-bandul/...` as needed for GitHub Pages subpath hosting. The final `dist/` was rebuilt for local root serving.
 - The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v8 all return successfully.
-- Pushed to `origin/master` (`Thaza-Kun/makmal-bandul`); `.github/workflows/deploy.yml` builds with `--public-url /makmal-bandul/` and deploys `dist/` to GitHub Pages. The live Pages URL is the deployment confirmation.
+- Pushed to `origin/master` (`Thaza-Kun/makmal-bandul`) as `69674e1`. `.github/workflows/deploy.yml` built with `--public-url /makmal-bandul/` and deployed `dist/` to GitHub Pages; the run succeeded and `https://thaza-kun.github.io/makmal-bandul/` returns 200 with `/makmal-bandul/`-prefixed hashed assets.
 - Physics smoke test caught and fixed a bad revolute-joint anchor (the bob initially snapped straight down instead of swinging).
 - The service worker precaches the hashed JS/WASM/CSS by reading them out of `index.html` at install time; otherwise the very first load would not be available offline until a reload.
 
@@ -50,3 +50,4 @@ Decisions made while building from `DESIGN.md` and `internal/`, plus what was ve
 - `wasm-opt` is disabled (`data-wasm-opt="0"`) because Trunk's download timed out here; the release wasm is ~1.2 MB. `Cargo.toml` already has `lto = true`, `opt-level = "z"` and `codegen-units = 1`. Re-enable wasm-opt when the tool can be fetched.
 - `pendulum_history` is now bounded to a 5-second window. The samples are written but not currently read back by any view — they satisfy the storage requirement only.
 - `internal/best-practices.md` asks for a dev-time `localStorage` text override and hot reload, written for the macroquad `HashMap` approach. With Yew's typed `I18n` context there is no dev server hook, so this was skipped rather than adding an unused override path.
+- The Pages run emits a GitHub warning that `actions/checkout@v4`, `actions/configure-pages@v5`, `actions/upload-artifact@v4` and `jetli/trunk-action@v0.5.0` still target Node.js 20 and are being forced onto Node.js 24. The deploy succeeds; update the actions when newer majors are available.
