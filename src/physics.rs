@@ -20,6 +20,7 @@ pub struct Simulation {
     integration: IntegrationParameters,
     bob_handle: RigidBodyHandle,
     threshold_deg: f32,
+    release_side: f32,
     was_inside: bool,
     pub angle_deg: f32,
     pub swings: u32,
@@ -74,6 +75,7 @@ impl Simulation {
             integration,
             bob_handle,
             threshold_deg,
+            release_side: if release_deg < 0.0 { -1.0 } else { 1.0 },
             was_inside: release_deg.abs() < threshold_deg,
             angle_deg: release_deg,
             swings: 0,
@@ -107,8 +109,9 @@ impl Simulation {
         let position = body.translation();
         self.angle_deg = position.x.atan2(position.y).to_degrees();
 
-        // A "swing" is an outward crossing of the threshold on either side.
-        let outside = self.angle_deg.abs() >= self.threshold_deg;
+        // One-sided sensor on the release side: count the return swing, i.e.
+        // the bob crossing the threshold outward to that side once per period.
+        let outside = self.angle_deg * self.release_side >= self.threshold_deg;
         let crossed = self.was_inside && outside;
         if crossed {
             self.swings += 1;
@@ -137,6 +140,20 @@ mod tests {
         assert!(sim.angle_deg.is_finite());
         assert!(sim.angle_deg.abs() <= 31.0);
         assert!((sim.elapsed - 10.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn only_the_return_to_the_release_side_is_counted() {
+        let bob = &crate::domain::BOB_PRESETS[0];
+        let mut sim = Simulation::new(0.5, 30.0, 5.0, bob);
+        for _ in 0..180 {
+            sim.step();
+        }
+        assert_eq!(
+            sim.swings, 1,
+            "only one full oscillation should have elapsed, got {}",
+            sim.swings
+        );
     }
 
     #[test]

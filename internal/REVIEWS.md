@@ -1,0 +1,52 @@
+# REVIEWS
+
+Decisions made while building from `DESIGN.md` and `internal/`, plus what was verified and what remains open.
+
+## Design decisions / deviations
+
+| Topic | DESIGN.md said | Built | Why |
+|---|---|---|---|
+| UI rendering | `macroquad` canvas, "Macroquad UI reads from HashMap" | Yew 0.23 DOM + SVG | Mobile-first and keyboard-friendly are hard requirements; native HTML inputs, focus order and touch targets come free. A hand-rolled canvas widget set (editable table, number inputs, draggable ruler/protractor) would be far more code with worse a11y. |
+| Physics | `rapier2d = { version = "0.22", features = ["deterministic"] }` | `rapier2d` 0.22 with `dim2`, `f32`, `enhanced-determinism`, `wasm-bindgen` | `"deterministic"` is not a feature of rapier2d 0.22; `enhanced-determinism` is the equivalent. `dim2` is required when default features are off (otherwise rapier2d does not compile). |
+| Tooling | `wasm-pack build --target web --out-dir pkg` | `trunk build --release` | `wasm-pack` is not installed in this environment; `trunk` is, and handles wasm-bindgen + asset pipeline. Output goes to `dist/` instead of `pkg/`; the deploy workflow publishes `dist/`. |
+| Asset paths | Cache `pkg/*` | SW precaches the stable shell and caches hashed wasm/js/css on first fetch | Trunk emits content-hashed filenames, so hard-coding them in `sw.js` would break on every build. Offline still works after the first load. |
+| UI text | No hardcoded strings | All screen text in `ui-text.en.json` / `ui-text.ms.json`; English embedded via `include_str!` for first offline load | Satisfies the externalisation requirement; bob names/materials stay in `BOB_PRESETS` because they are domain data. |
+| Swing count | "each crossing of swing threshold line (both directions)" | Count outward crossings on either side (one per half-oscillation) | `period = 2 × time / swings`. Counts in/out on the same side would double-count every half-swing. |
+| Number inputs | "synced number input", "clamps on blur" | Commit on `change` (blur/Enter), not on every keystroke | Writing `value` from state on each `input` re-renders and reformats mid-typing, making decimal entry impossible. `change` still fires on blur, so clamping stays correct. |
+| Add Reading | "append a new trial row (re-runs experiment with same params)" | Re-runs immediately with the same params; the new reading is appended when that run is confirmed | Adding a blank editable row did not re-run the experiment and left the user stuck in the modal. |
+| Setup flow (updated design) | Persistent **collapsible** panel plus first-load modal sequence | `SetupPanel` is always mounted; collapsed state shows a bob/length/angle summary bar, expanded shows all values and the menu buttons. `SetupDialogs` walks Bob → Length → Release → Threshold | Satisfies live value display and guided setup without discarding the working state machine or persistence. |
+| Start button | Explicit Start (green, play icon, pulse); only an explicit press enters Running | Added a prominent Start button to the setup panel; the final dialog's `Select` now only closes the wizard and returns to Setup | `internal/user-workflow.md` requires `Close`/`Select` to return to setup with Start enabled, so auto-starting on the last dialog was removed. |
+| Menu edits while running | Not specified | Pauses the run, reopens the wizard; after the last `Select` the user presses Start to begin a fresh run with the edited params | Editing bob/length invalidates an in-flight run; reusing the same Start path avoids a separate restart flow. |
+| Bob labels | `100g`, `30g`, `20g`; no `material` field | `PendulumBob` has only `name`, `mass`, `radius`; cards and exports show mass labels | Matches the updated `DESIGN.md`; removes stale material text from the domain and UI. |
+| Swing count (updated design) | One-direction crossing on the return swing only | Count outward crossings on the release side only, once per full oscillation; `period = time / swings` | Supersedes the earlier both-sides rule in the same table. The one-sided sensor must not double-count a half oscillation. |
+| Precision | Readouts, confirm table and results rounded to tool precision | `format_precision` used in setup/confirm/results; confirm edits snap to the field's step | Avoids sub-precision digits in the UI without changing the stored tool ranges. |
+| Visuals | Retort stand, one-sided dashed threshold handle, pulsing highlighted pendulum, digital pivot timer/counter | SVG stand/threshold/bob plus a CSS `.pivot-hud` over the pivot and bottom-anchored controls | Keeps the existing DOM/SVG stack; no canvas widget rewrite needed. |
+| Palette | `internal/palette.css` — Space Indigo, Lavender Grey, Platinum, Punch Red, Flag Red | CSS variables and SVG colours switched from teal/navy to the supplied palette; green reserved for Start/Resume as the spec demands | Matches the supplied visual identity; dark-mode surface (`#1a1c2e`) used because the app is dark-only. |
+| Length dialog | Partial ~10 cm ruler with 1 mm divisions, ± buttons, ruler slides as value changes | Horizontal sliding ruler segment centred on the value plus ± 1 mm stepper buttons; removed the old vertical ruler and string view | Matches the instrument metaphor and keyboard-accessible step controls. |
+| Air damping | Linear + quadratic drag, tuned per bob mass/radius | Reverted at user request — no explicit drag force is applied; simulation keeps only Rapier's default solver behaviour | User asked to revert the physics change after the internal-doc pass. Divergence from `internal/user-workflow.md` is intentional; the deterministic one-sided swing count is unchanged. |
+| Running arc | Not in the updated design | Removed the extra release-angle arc from the Running view | It appeared as a stray curve behind the pendulum; Running only shows the stand, bob/rod and one-sided threshold line. Protractor arcs remain only in setup dialogs. |
+| Dialog action label | `Close` advances each setup dialog | User requested `Select` instead, in English and Malay (`Pilih`) | The button confirms the current choice/value and advances; `dialogs.closeBtn` became `dialogs.selectBtn`. |
+| Running instruments | Timer (MM:SS.cc) and swing counter on top of the pivot; bottom-anchored menu | `.pivot-hud` overlays the pivot; bottom controls hold Confirm/Reset above a wide red Stop (green Resume when paused) | Removed the duplicated bottom Length/Angle boxes and the old hardware-stopwatch styling; values already live in the setup panel. |
+| Swing history | `pendulum_history[]` bounded to the last 5 seconds of swing data | Timestamped `SwingSample`s recorded on each counted crossing and pruned to a 5 s window; experiment exports no longer written there | Resolves the unbounded-growth concern; nothing consumed the old export records. |
+| Mobile panel placement | Above the visualization on mobile, sidebar on desktop | `.setup-panel` is a normal inline card on mobile and `position: sticky; top: 80px` from 900 px up | Follows `internal/user-workflow.md`; the earlier `DESIGN.md` bottom-sheet CSS would also overlap the bottom-anchored run controls. |
+| PWA colours | Palette from `internal/palette.css` | `theme-color` in `index.html` and both colours in `manifest.json` changed to Space Indigo `#2b2d42` | The browser/install UI still used the old navy, clashing with the rest of the app. |
+| Offline cache | Cache `pkg/*` | `dist/` with hashed assets discovered from `index.html`; cache name bumped to `makmal-bandul-v8` | Each visible bundle/text change needs a fresh cache name; the cache-first handler would otherwise keep serving stale `index.html`, JSON and hashed assets. |
+
+## Confirmed behaviour
+
+- `cargo fmt --check` — clean.
+- `cargo test --target x86_64-unknown-linux-gnu` — 18/18 pass: deterministic physics, one-sided return-swing count, dialog order, bob mass labels, precision formatting, clamping, period/g calculation, CSV/JSON export, 5-second swing-history pruning, i18n lookup and trial insertion.
+- `cargo check --target wasm32-unknown-unknown` — passes with no warnings.
+- `trunk build --release` — passes; `dist/` contains the wasm/js/css bundle plus manifest, both icons, SW and both translation files.
+- `trunk build --release --public-url /makmal-bandul/` — passes; generated asset URLs are `/makmal-bandul/...` as needed for GitHub Pages subpath hosting. The final `dist/` was rebuilt for local root serving.
+- The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v8 all return successfully.
+- Pushed to `origin/master` (`Thaza-Kun/makmal-bandul`); `.github/workflows/deploy.yml` builds with `--public-url /makmal-bandul/` and deploys `dist/` to GitHub Pages. The live Pages URL is the deployment confirmation.
+- Physics smoke test caught and fixed a bad revolute-joint anchor (the bob initially snapped straight down instead of swinging).
+- The service worker precaches the hashed JS/WASM/CSS by reading them out of `index.html` at install time; otherwise the very first load would not be available offline until a reload.
+
+## Open / unverified
+
+- The updated UI is live at `http://localhost:3096/` for manual visual inspection; no automated browser tool was available here, so the new Start-only flow, collapsible panel, sliding ruler, pivot HUD, bottom controls, touch drag, focus/keyboard operation, clipboard, download and service-worker offline reload are implemented but not visually verified.
+- `wasm-opt` is disabled (`data-wasm-opt="0"`) because Trunk's download timed out here; the release wasm is ~1.2 MB. `Cargo.toml` already has `lto = true`, `opt-level = "z"` and `codegen-units = 1`. Re-enable wasm-opt when the tool can be fetched.
+- `pendulum_history` is now bounded to a 5-second window. The samples are written but not currently read back by any view — they satisfy the storage requirement only.
+- `internal/best-practices.md` asks for a dev-time `localStorage` text override and hot reload, written for the macroquad `HashMap` approach. With Yew's typed `I18n` context there is no dev server hook, so this was skipped rather than adding an unused override path.

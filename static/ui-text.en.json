@@ -19,8 +19,14 @@
     "releaseHint": "Drag the needle on the protractor or type an angle.",
     "thresholdTitle": "Swing threshold",
     "thresholdLabel": "Angle (°)",
-    "thresholdHint": "A swing is counted when the bob passes this angle outward on either side.",
-    "startBtn": "Start experiment",
+    "thresholdHint": "A swing is counted when the bob returns outward to this angle on the release side.",
+    "panelTitle": "Setup",
+    "changeBob": "Change bob",
+    "changeLength": "Change length",
+    "valueBob": "Bob",
+    "startBtn": "Start",
+    "expand": "Expand setup",
+    "collapse": "Collapse setup",
     "invalidHint": "Complete every field to start."
   },
   "running": {
@@ -30,8 +36,10 @@
     "swingCounter": "Swings: {count}",
     "swingLabel": "Swings",
     "timeLabel": "Stopwatch",
+    "lapBtn": "LAP",
     "runningHint": "The stopwatch and counter advance automatically.",
-    "pivotLabel": "Pivot"
+    "pivotLabel": "Pivot",
+    "pendulumLabel": "Pendulum"
   },
   "paused": {
     "title": "Experiment paused",
@@ -69,11 +77,25 @@
     "newExperiment": "New experiment",
     "referenceG": "9.81"
   },
+  "dialogs": {
+    "bobTitle": "Choose a bob",
+    "bobHint": "Pick the bob by mass, then select to continue.",
+    "lengthTitle": "Set the string length",
+    "lengthHint": "Drag the ruler segment or use ± to change the length by 1 mm.",
+    "releaseTitle": "Set the release angle",
+    "releaseHint": "Drag the highlighted bob or the protractor needle, from 5° to 90°.",
+    "thresholdTitle": "Set the swing threshold",
+    "thresholdHint": "Drag the circle handle on the release side, from 1° to 89°.",
+    "selectBtn": "Select",
+    "completeHint": "Finish the guided setup, then press Start."
+  },
   "common": {
     "unitMetre": "m",
     "unitDegree": "°",
     "unitSecond": "s",
     "unitKilogram": "kg",
+    "increment": "Increase by 1 mm",
+    "decrement": "Decrease by 1 mm",
     "saved": "Saved",
     "copied": "Copied",
     "copyFailed": "Could not copy"

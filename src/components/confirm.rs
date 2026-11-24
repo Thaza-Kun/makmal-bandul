@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{Event, HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
 
-use crate::domain::{Protractor, Rule, Stopwatch, BOB_PRESETS};
+use crate::domain::{format_precision, Protractor, Rule, Stopwatch, BOB_PRESETS};
 use crate::i18n::I18n;
 use crate::model::ConfirmRow;
 
@@ -68,7 +68,7 @@ pub fn confirm_modal(props: &ConfirmProps) -> Html {
 
             let length_cell = numeric_cell(
                 index,
-                format!("{:.3}", row.length),
+                format_precision(row.length, rule.precision),
                 rule.precision,
                 rule.min_length,
                 rule.max_length,
@@ -78,7 +78,7 @@ pub fn confirm_modal(props: &ConfirmProps) -> Html {
             );
             let release_cell = numeric_cell(
                 index,
-                format!("{:.0}", row.release_angle),
+                format_precision(row.release_angle, release.precision),
                 release.precision,
                 release.min_angle,
                 release.max_angle,
@@ -88,7 +88,7 @@ pub fn confirm_modal(props: &ConfirmProps) -> Html {
             );
             let time_cell = numeric_cell(
                 index,
-                format!("{:.2}", row.time),
+                format_precision(row.time, stopwatch.precision),
                 stopwatch.precision,
                 stopwatch.min_time,
                 stopwatch.max_time,
@@ -186,7 +186,12 @@ where
                 .and_then(|target| target.dyn_into::<HtmlInputElement>().ok())
                 .and_then(|input| input.value().parse::<f32>().ok())
             {
-                let clamped = parsed.clamp(min, max);
+                let snapped = if step > 0.0 {
+                    (parsed / step).round() * step
+                } else {
+                    parsed
+                };
+                let clamped = snapped.clamp(min, max);
                 let apply = apply.clone();
                 update(index, Box::new(move |row| apply(row, clamped)));
             }

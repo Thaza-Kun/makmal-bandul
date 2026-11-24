@@ -10,12 +10,12 @@ pub struct Trial {
     pub swings: u32,
 }
 
-/// One swing is a half oscillation, so a full period takes two swings.
+/// One counted swing is a full oscillation (return to the release side).
 pub fn period_seconds(trial: &Trial) -> Option<f32> {
     if trial.swings == 0 || trial.time <= 0.0 {
         None
     } else {
-        Some(2.0 * trial.time / trial.swings as f32)
+        Some(trial.time / trial.swings as f32)
     }
 }
 
@@ -101,7 +101,7 @@ mod tests {
         // 1 m pendulum has T ≈ 2.006 s at small angles.
         let trial = Trial {
             time: 20.06,
-            swings: 20,
+            swings: 10,
         };
         let period = period_seconds(&trial).unwrap();
         assert!((period - 2.006).abs() < 0.001);
@@ -132,16 +132,16 @@ mod tests {
     #[test]
     fn csv_has_a_header_and_one_row_per_trial() {
         let data = Export {
-            bob: "Steel".into(),
+            bob: "100g".into(),
             length_m: 0.5,
             release_angle_deg: 30.0,
             swing_threshold_deg: 5.0,
             trials: vec![Trial {
-                time: 14.0,
-                swings: 20,
+                time: 14.2,
+                swings: 10,
             }],
         };
         assert_eq!(data.to_csv().lines().count(), 2);
-        assert!(data.to_json().contains("\"Steel\""));
+        assert!(data.to_json().contains("\"100g\""));
     }
 }

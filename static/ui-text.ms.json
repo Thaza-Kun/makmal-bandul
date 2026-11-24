@@ -19,8 +19,14 @@
     "releaseHint": "Tarik jarum pada protraktor atau taip sudut.",
     "thresholdTitle": "Ambang ayunan",
     "thresholdLabel": "Sudut (°)",
-    "thresholdHint": "Satu ayunan dikira apabila bebandul melalui sudut ini ke luar pada mana-mana sisi.",
-    "startBtn": "Mula eksperimen",
+    "thresholdHint": "Satu ayunan dikira apabila bebandul kembali ke luar pada sudut ini di sisi lepasan.",
+    "panelTitle": "Persediaan",
+    "changeBob": "Tukar bebandul",
+    "changeLength": "Tukar panjang",
+    "valueBob": "Bebandul",
+    "startBtn": "Mula",
+    "expand": "Buka persediaan",
+    "collapse": "Tutup persediaan",
     "invalidHint": "Lengkapkan semua medan untuk mula."
   },
   "running": {
@@ -30,8 +36,10 @@
     "swingCounter": "Ayunan: {count}",
     "swingLabel": "Ayunan",
     "timeLabel": "Jam randik",
+    "lapBtn": "PATAH",
     "runningHint": "Jam randik dan pembilang bertambah secara automatik.",
-    "pivotLabel": "Titik pangsi"
+    "pivotLabel": "Titik pangsi",
+    "pendulumLabel": "Bandul"
   },
   "paused": {
     "title": "Eksperimen dijeda",
@@ -69,11 +77,25 @@
     "newExperiment": "Eksperimen baharu",
     "referenceG": "9.81"
   },
+  "dialogs": {
+    "bobTitle": "Pilih bebandul",
+    "bobHint": "Pilih bebandul mengikut jisim, kemudian pilih untuk teruskan.",
+    "lengthTitle": "Tetapkan panjang tali",
+    "lengthHint": "Tarik segmen pembaris atau gunakan ± untuk menukar panjang sebanyak 1 mm.",
+    "releaseTitle": "Tetapkan sudut lepasan",
+    "releaseHint": "Tarik bebandul yang berkilau atau jarum protraktor, dari 5° hingga 90°.",
+    "thresholdTitle": "Tetapkan ambang ayunan",
+    "thresholdHint": "Tarik bulatan pemegang di sisi lepasan, dari 1° hingga 89°.",
+    "selectBtn": "Pilih",
+    "completeHint": "Lengkapkan persediaan berpandu, kemudian tekan Mula."
+  },
   "common": {
     "unitMetre": "m",
     "unitDegree": "°",
     "unitSecond": "s",
     "unitKilogram": "kg",
+    "increment": "Tambah 1 mm",
+    "decrement": "Kurang 1 mm",
     "saved": "Disimpan",
     "copied": "Disalin",
     "copyFailed": "Gagal menyalin"

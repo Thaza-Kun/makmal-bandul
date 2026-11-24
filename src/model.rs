@@ -13,10 +13,31 @@ pub enum Phase {
     Results,
 }
 
+/// The first-load wizard; each dialog is completed before the next appears.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SetupDialog {
+    Bob,
+    Length,
+    Release,
+    Threshold,
+}
+
+impl SetupDialog {
+    /// `None` means the sequence is finished and the experiment can start.
+    pub fn next(self) -> Option<Self> {
+        match self {
+            Self::Bob => Some(Self::Length),
+            Self::Length => Some(Self::Release),
+            Self::Release => Some(Self::Threshold),
+            Self::Threshold => None,
+        }
+    }
+}
+
 impl Phase {
     pub fn label_key(&self) -> &'static str {
         match self {
-            Phase::Setup => "setup.bobTitle",
+            Phase::Setup => "setup.panelTitle",
             Phase::Running => "running.title",
             Phase::Paused => "paused.title",
             Phase::Confirming => "confirm.title",
@@ -81,5 +102,13 @@ mod tests {
         params.length = 0.5;
         params.bob_index = 99;
         assert!(!params.valid());
+    }
+
+    #[test]
+    fn setup_dialogs_follow_the_guided_order() {
+        assert_eq!(SetupDialog::Bob.next(), Some(SetupDialog::Length));
+        assert_eq!(SetupDialog::Length.next(), Some(SetupDialog::Release));
+        assert_eq!(SetupDialog::Release.next(), Some(SetupDialog::Threshold));
+        assert_eq!(SetupDialog::Threshold.next(), None);
     }
 }

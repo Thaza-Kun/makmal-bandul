@@ -112,6 +112,8 @@ mod tests {
     fn english_bundle_has_the_expected_keys() {
         let i18n = I18n::embedded();
         assert_eq!(i18n.t("setup.bobTitle"), "Select pendulum bob");
+        assert_eq!(i18n.t("dialogs.selectBtn"), "Select");
+        assert_eq!(i18n.t("running.pendulumLabel"), "Pendulum");
         assert_eq!(
             i18n.tf("running.swingCounter", &[("count", "4".into())]),
             "Swings: 4"

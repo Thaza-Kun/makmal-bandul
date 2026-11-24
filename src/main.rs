@@ -13,12 +13,14 @@ use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{window, Event};
 use yew::prelude::*;
 
-use components::{confirm::ConfirmModal, results::ResultsPanel, run::RunPanel, setup::SetupPanel};
-use domain::BOB_PRESETS;
-use model::{ConfirmRow, Params, Phase};
+use components::{
+    confirm::ConfirmModal, dialogs::SetupDialogs, results::ResultsPanel, run::RunPanel,
+    setup::SetupPanel,
+};
+use domain::{MeasureTool, Protractor, Rule, Stopwatch, BOB_PRESETS};
+use model::{ConfirmRow, Params, Phase, SetupDialog};
 use physics::{Simulation, FIXED_DT};
-use results::Export;
-use storage::{HISTORY_KEY, PARAMS_KEY, READINGS_KEY};
+use storage::{record_swing, SwingSample, HISTORY_KEY, PARAMS_KEY, READINGS_KEY};
 
 const LANG_KEY: &str = "pendulum_lang";
 
@@ -31,7 +33,12 @@ fn main() {
 fn app() -> Html {
     let i18n = use_state(i18n::I18n::embedded);
     let phase = use_state(|| Phase::Setup);
-    let params = use_state(|| storage::load::<Params>(PARAMS_KEY).unwrap_or_default());
+    let dialog = use_state(|| Some(SetupDialog::Bob));
+    let params = use_state(|| {
+        storage::load::<Params>(PARAMS_KEY)
+            .filter(|params| params.valid())
+            .unwrap_or_default()
+    });
     let rows = use_state(Vec::<ConfirmRow>::new);
     let adding = use_state(|| false);
     let tick = use_state(|| 0u64);
@@ -85,12 +92,23 @@ fn app() -> Html {
                 let mut guard = simulation.borrow_mut();
                 if let Some(sim) = guard.as_mut() {
                     let mut stepped = false;
+                    let mut crossed = false;
+                    let mut crossed_angle = sim.angle_deg;
                     while accumulator >= FIXED_DT as f64 {
-                        sim.step();
+                        if sim.step() {
+                            crossed = true;
+                            crossed_angle = sim.angle_deg;
+                        }
                         accumulator -= FIXED_DT as f64;
                         stepped = true;
                     }
                     drop(guard);
+                    if crossed {
+                        let mut history: Vec<SwingSample> =
+                            storage::load(HISTORY_KEY).unwrap_or_default();
+                        record_swing(&mut history, now_ms(), crossed_angle);
+                        storage::save(HISTORY_KEY, &history);
+                    }
                     if stepped {
                         tick.set(tick.wrapping_add(1));
                     }
@@ -120,10 +138,6 @@ fn app() -> Html {
     let swings = current.as_ref().map(|sim| sim.swings).unwrap_or(0);
     drop(current);
 
-    let onparams = {
-        let params = params.clone();
-        move |value: Params| params.set(value)
-    };
     let onstart = {
         let simulation = simulation.clone();
         let params = params.clone();
@@ -153,12 +167,14 @@ fn app() -> Html {
         let simulation = simulation.clone();
         let rows = rows.clone();
         let adding = adding.clone();
+        let dialog = dialog.clone();
         let phase = phase.clone();
         let tick = tick.clone();
         move |_| {
             *simulation.borrow_mut() = None;
             rows.set(Vec::new());
             adding.set(false);
+            dialog.set(Some(SetupDialog::Bob));
             tick.set(*tick + 1);
             phase.set(Phase::Setup);
         }
@@ -171,14 +187,26 @@ fn app() -> Html {
         let phase = phase.clone();
         move |_| {
             let sim = simulation.borrow();
+            let rule = Rule {
+                current_length: params.length,
+                ..Rule::default()
+            };
+            let release = Protractor {
+                current_angle: params.release_angle,
+                ..Protractor::release()
+            };
+            let watch = Stopwatch {
+                elapsed: sim.as_ref().map(|s| s.elapsed).unwrap_or(0.0),
+                ..Stopwatch::default()
+            };
             let reading = ConfirmRow {
                 bob: BOB_PRESETS
                     .get(params.bob_index)
                     .map(|bob| bob.name.to_string())
                     .unwrap_or_default(),
-                length: params.length,
-                release_angle: params.release_angle,
-                time: sim.as_ref().map(|s| s.elapsed).unwrap_or(0.0),
+                length: rule.quantize(params.length),
+                release_angle: release.quantize(params.release_angle),
+                time: watch.quantize(watch.elapsed),
                 swings: sim.as_ref().map(|s| s.swings).unwrap_or(0),
             };
             drop(sim);
@@ -211,33 +239,9 @@ fn app() -> Html {
     };
     let onsave = {
         let rows = rows.clone();
-        let params = params.clone();
         let phase = phase.clone();
         move |_| {
             storage::save(READINGS_KEY, &*rows);
-            let mut history: Vec<serde_json::Value> =
-                storage::load(HISTORY_KEY).unwrap_or_default();
-            let p = &*params;
-            let export = Export {
-                bob: BOB_PRESETS
-                    .get(p.bob_index)
-                    .map(|bob| bob.name.to_string())
-                    .unwrap_or_default(),
-                length_m: p.length,
-                release_angle_deg: p.release_angle,
-                swing_threshold_deg: p.swing_threshold,
-                trials: rows
-                    .iter()
-                    .map(|row| results::Trial {
-                        time: row.time,
-                        swings: row.swings,
-                    })
-                    .collect(),
-            };
-            if let Ok(value) = serde_json::to_value(&export) {
-                history.push(value);
-                storage::save(HISTORY_KEY, &history);
-            }
             phase.set(Phase::Results);
         }
     };
@@ -258,9 +262,40 @@ fn app() -> Html {
         }
     };
 
+    let onbob = {
+        let dialog = dialog.clone();
+        let phase = phase.clone();
+        move |_| {
+            if *phase == Phase::Running {
+                phase.set(Phase::Paused);
+            }
+            dialog.set(Some(SetupDialog::Bob));
+        }
+    };
+    let onlength = {
+        let dialog = dialog.clone();
+        let phase = phase.clone();
+        move |_| {
+            if *phase == Phase::Running {
+                phase.set(Phase::Paused);
+            }
+            dialog.set(Some(SetupDialog::Length));
+        }
+    };
+    let ondialogclose = {
+        let dialog = dialog.clone();
+        move |_| {
+            if let Some(current) = *dialog {
+                dialog.set(current.next());
+            }
+        }
+    };
+
     let screen = match *phase {
         Phase::Setup => html! {
-            <SetupPanel params={(*params).clone()} {onparams} {onstart} />
+            <section class="phase-panel">
+                <p class="hint">{ i18n.t("dialogs.completeHint") }</p>
+            </section>
         },
         Phase::Running | Phase::Paused => html! {
             <RunPanel
@@ -303,12 +338,14 @@ fn app() -> Html {
                     let simulation = simulation.clone();
                     let rows = rows.clone();
                     let adding = adding.clone();
+                    let dialog = dialog.clone();
                     let phase = phase.clone();
                     let tick = tick.clone();
                     move |_| {
                         *simulation.borrow_mut() = None;
                         rows.set(Vec::new());
                         adding.set(false);
+                        dialog.set(Some(SetupDialog::Bob));
                         tick.set(*tick + 1);
                         phase.set(Phase::Setup);
                     }
@@ -334,7 +371,26 @@ fn app() -> Html {
                         <option value="ms">{"MS"}</option>
                     </select>
                 </header>
-                <main>{ screen }</main>
+                <div class="workspace">
+                    <SetupPanel
+                        params={(*params).clone()}
+                        {onbob}
+                        {onlength}
+                        {onstart}
+                    />
+                    <main>{ screen }</main>
+                </div>
+                { dialog.as_ref().map(|current| html! {
+                    <SetupDialogs
+                        dialog={*current}
+                        params={(*params).clone()}
+                        onparams={{
+                            let params = params.clone();
+                            move |next| params.set(next)
+                        }}
+                        onclose={ondialogclose.clone()}
+                    />
+                }) }
             </div>
         </ContextProvider<i18n::I18n>>
     }
@@ -364,7 +420,7 @@ mod tests {
     fn confirm_replaces_first_reading_and_appends_additional_trials() {
         let mut rows = Vec::new();
         let first = ConfirmRow {
-            bob: "Steel".into(),
+            bob: "100g".into(),
             length: 0.5,
             release_angle: 30.0,
             time: 10.0,

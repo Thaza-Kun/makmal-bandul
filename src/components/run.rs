@@ -3,7 +3,6 @@
 use yew::prelude::*;
 
 use super::widgets::PendulumView;
-use crate::domain::format_time;
 use crate::i18n::I18n;
 use crate::model::Params;
 
@@ -23,73 +22,58 @@ pub struct RunProps {
 #[function_component(RunPanel)]
 pub fn run_panel(props: &RunProps) -> Html {
     let i18n = use_context::<I18n>().expect("i18n context");
-    let (title_key, hint_key, swing_key, counter_key) = if props.paused {
-        (
-            "paused.title",
-            "paused.frozenHint",
-            "paused.swingLabel",
-            "paused.swingCounter",
-        )
+    let (title_key, hint_key, counter_key) = if props.paused {
+        ("paused.title", "paused.frozenHint", "paused.swingCounter")
     } else {
         (
             "running.title",
             "running.runningHint",
-            "running.swingLabel",
             "running.swingCounter",
+        )
+    };
+    let (action_label, action_class, action) = if props.paused {
+        (
+            i18n.t("paused.resumeBtn"),
+            "btn wide action resume",
+            props.onresume.clone(),
+        )
+    } else {
+        (
+            i18n.t("running.stopBtn"),
+            "btn wide action stop",
+            props.onstop.clone(),
         )
     };
 
     html! {
-        <section class="phase-panel">
+        <section class="phase-panel run-phase">
             <h2>{ i18n.t(title_key) }</h2>
             <p class="hint">{ i18n.t(hint_key) }</p>
 
             <PendulumView
                 length={props.params.length}
                 angle_deg={props.angle_deg}
-                release_deg={props.params.release_angle}
                 threshold_deg={props.params.swing_threshold}
                 bob_index={props.params.bob_index}
+                time={props.time}
+                swings={props.swings}
             />
-
-            <div class="readouts">
-                <div class="readout counter">
-                    <span class="readout-label">{ i18n.t(swing_key) }</span>
-                    <span class="readout-value" aria-live="polite">{ props.swings }</span>
-                </div>
-                <div class="readout">
-                    <span class="readout-label">{ i18n.t("running.timeLabel") }</span>
-                    <span class="readout-value" aria-live="off">{ format_time(props.time) }</span>
-                </div>
-            </div>
             <p class="sr-only">{ i18n.tf(counter_key, &[("count", props.swings.to_string())]) }</p>
 
-            <div class="btn-row">
-                { if props.paused {
-                    html! {
-                        <>
-                            <button type="button" class="btn primary" onclick={{
-                                let callback = props.onresume.clone();
-                                move |_| callback.emit(())
-                            }}>{ i18n.t("paused.resumeBtn") }</button>
-                            <button type="button" class="btn" onclick={{
-                                let callback = props.onconfirm.clone();
-                                move |_| callback.emit(())
-                            }}>{ i18n.t("paused.confirmBtn") }</button>
-                        </>
-                    }
-                } else {
-                    html! {
-                        <button type="button" class="btn primary" onclick={{
-                            let callback = props.onstop.clone();
-                            move |_| callback.emit(())
-                        }}>{ i18n.t("running.stopBtn") }</button>
-                    }
-                } }
-                <button type="button" class="btn danger" onclick={{
-                    let callback = props.onreset.clone();
-                    move |_| callback.emit(())
-                }}>{ i18n.t("running.resetBtn") }</button>
+            <div class="run-controls">
+                <div class="btn-row">
+                    <button type="button" class="btn" onclick={{
+                        let callback = props.onconfirm.clone();
+                        move |_| callback.emit(())
+                    }}>{ i18n.t("paused.confirmBtn") }</button>
+                    <button type="button" class="btn danger" onclick={{
+                        let callback = props.onreset.clone();
+                        move |_| callback.emit(())
+                    }}>{ i18n.t("running.resetBtn") }</button>
+                </div>
+                <button type="button" class={action_class} onclick={move |_| action.emit(())}>
+                    { action_label }
+                </button>
             </div>
         </section>
     }

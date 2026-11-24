@@ -105,6 +105,20 @@ pub fn format_time(seconds: f32) -> String {
     format!("{minutes:02}:{secs:02}.{cs:02}")
 }
 
+/// Show a reading with exactly the digits its instrument can resolve.
+pub fn format_precision(value: f32, precision: f32) -> String {
+    let digits = if precision >= 1.0 {
+        0
+    } else if precision >= 0.1 {
+        1
+    } else if precision >= 0.01 {
+        2
+    } else {
+        3
+    };
+    format!("{value:.digits$}")
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Protractor {
     pub precision: f32,
@@ -150,30 +164,27 @@ impl MeasureTool for Protractor {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PendulumBob {
+    /// Mass label shown on the card, e.g. "100g".
     pub name: Cow<'static, str>,
     pub mass: f32,
     pub radius: f32,
-    pub material: Cow<'static, str>,
 }
 
 pub const BOB_PRESETS: [PendulumBob; 3] = [
     PendulumBob {
-        name: Cow::Borrowed("Steel"),
+        name: Cow::Borrowed("100g"),
         mass: 0.1,
         radius: 0.0125,
-        material: Cow::Borrowed("Steel"),
     },
     PendulumBob {
-        name: Cow::Borrowed("Wood"),
+        name: Cow::Borrowed("30g"),
         mass: 0.03,
         radius: 0.015,
-        material: Cow::Borrowed("Wood"),
     },
     PendulumBob {
-        name: Cow::Borrowed("Plastic"),
+        name: Cow::Borrowed("20g"),
         mass: 0.02,
         radius: 0.015,
-        material: Cow::Borrowed("Plastic"),
     },
 ];
 
@@ -204,5 +215,24 @@ mod tests {
         assert_eq!(format_time(sw.elapsed), "00:00.00");
         sw.elapsed = 65.43;
         assert_eq!(format_time(sw.elapsed), "01:05.43");
+    }
+
+    #[test]
+    fn readings_show_only_the_digits_their_tool_resolves() {
+        assert_eq!(format_precision(0.5124, Rule::default().precision), "0.512");
+        assert_eq!(
+            format_precision(30.0, Protractor::release().precision),
+            "30"
+        );
+        assert_eq!(
+            format_precision(9.876, Stopwatch::default().precision),
+            "9.88"
+        );
+    }
+
+    #[test]
+    fn bob_cards_are_labelled_by_mass() {
+        assert_eq!(BOB_PRESETS[0].name, "100g");
+        assert_eq!(BOB_PRESETS[2].name, "20g");
     }
 }

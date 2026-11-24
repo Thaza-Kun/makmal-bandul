@@ -5,7 +5,7 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::{window, Blob, HtmlAnchorElement, Url};
 use yew::prelude::*;
 
-use crate::domain::BOB_PRESETS;
+use crate::domain::{format_precision, Stopwatch, BOB_PRESETS};
 use crate::i18n::I18n;
 use crate::model::{ConfirmRow, Params};
 use crate::results::{summarize, Export, Trial, G_REFERENCE};
@@ -31,6 +31,7 @@ pub fn results_panel(props: &ResultsProps) -> Html {
         })
         .collect();
     let summary = summarize(props.params.length, &trials);
+    let time_precision = Stopwatch::default().precision;
     let export = Export {
         bob: BOB_PRESETS
             .get(props.params.bob_index)
@@ -80,15 +81,15 @@ pub fn results_panel(props: &ResultsProps) -> Html {
             <div class="summary-grid">
                 <div class="summary-card">
                     <span class="summary-label">{ i18n.t("results.period") }</span>
-                    <span class="summary-value">{ format!("{:.3}", summary.mean_period) }</span>
+                    <span class="summary-value">{ format_precision(summary.mean_period, time_precision) }</span>
                 </div>
                 <div class="summary-card">
                     <span class="summary-label">{ i18n.t("results.gEstimate") }</span>
-                    <span class="summary-value">{ format!("{:.2}", summary.mean_g) }</span>
+                    <span class="summary-value">{ format_precision(summary.mean_g, 0.01) }</span>
                 </div>
                 <div class="summary-card">
                     <span class="summary-label">{ i18n.tf("results.error", &[("reference", format!("{G_REFERENCE}"))]) }</span>
-                    <span class="summary-value">{ format!("{:.1}%", summary.error_pct) }</span>
+                    <span class="summary-value">{ format!("{}%", format_precision(summary.error_pct, 0.1)) }</span>
                 </div>
                 <div class="summary-card">
                     <span class="summary-label">{ i18n.t("results.trials") }</span>
