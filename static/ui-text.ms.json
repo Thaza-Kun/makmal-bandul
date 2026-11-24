@@ -86,6 +86,8 @@
     "releaseHint": "Tarik bebandul yang berkilau atau jarum protraktor, dari 5° hingga 90°.",
     "thresholdTitle": "Tetapkan ambang ayunan",
     "thresholdHint": "Tarik bulatan pemegang di sisi lepasan, dari 1° hingga 89°.",
+    "releaseAngleAria": "Sudut lepasan",
+    "thresholdAngleAria": "Ambang ayunan",
     "selectBtn": "Pilih",
     "completeHint": "Lengkapkan persediaan berpandu, kemudian tekan Mula."
   },

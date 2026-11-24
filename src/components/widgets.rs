@@ -380,6 +380,7 @@ pub struct SetupPendulumProps {
 /// Highlighted pendulum used by dialogs 3 and 4: drag the bob or the threshold handle.
 #[function_component(SetupPendulum)]
 pub fn setup_pendulum(props: &SetupPendulumProps) -> Html {
+    let i18n = use_context::<I18n>().expect("i18n context");
     let dragging = use_state(|| false);
     let (min, max, precision) = match props.mode {
         SetupMode::Angle => (
@@ -462,10 +463,10 @@ pub fn setup_pendulum(props: &SetupPendulumProps) -> Html {
             xmlns="http://www.w3.org/2000/svg"
             role="slider"
             tabindex="0"
-            aria-label={match props.mode {
-                SetupMode::Angle => "release angle",
-                SetupMode::Threshold => "swing threshold",
-            }}
+            aria-label={i18n.t(match props.mode {
+                SetupMode::Angle => "dialogs.releaseAngleAria",
+                SetupMode::Threshold => "dialogs.thresholdAngleAria",
+            })}
             aria-valuemin={px(min)}
             aria-valuemax={px(max)}
             aria-valuenow={px(current)}

@@ -30,7 +30,8 @@ Decisions made while building from `DESIGN.md` and `internal/`, plus what was ve
 | Swing history | `pendulum_history[]` bounded to the last 5 seconds of swing data | Timestamped `SwingSample`s recorded on each counted crossing and pruned to a 5 s window; experiment exports no longer written there | Resolves the unbounded-growth concern; nothing consumed the old export records. |
 | Mobile panel placement | Above the visualization on mobile, sidebar on desktop | `.setup-panel` is a normal inline card on mobile and `position: sticky; top: 80px` from 900 px up | Follows `internal/user-workflow.md`; the earlier `DESIGN.md` bottom-sheet CSS would also overlap the bottom-anchored run controls. |
 | PWA colours | Palette from `internal/palette.css` | `theme-color` in `index.html` and both colours in `manifest.json` changed to Space Indigo `#2b2d42` | The browser/install UI still used the old navy, clashing with the rest of the app. |
-| Offline cache | Cache `pkg/*` | `dist/` with hashed assets discovered from `index.html`; cache name bumped to `makmal-bandul-v8` | Each visible bundle/text change needs a fresh cache name; the cache-first handler would otherwise keep serving stale `index.html`, JSON and hashed assets. |
+| Accessibility labels | No hardcoded strings in Rust/WASM | `aria-label` for the pendulum, release and threshold sliders moved into both translation bundles | Browser checks found three English labels still embedded in Rust; they are now translatable like every other string. |
+| Offline cache | Cache `pkg/*` | `dist/` with hashed assets discovered from `index.html`; cache name bumped to `makmal-bandul-v9` | Each visible bundle/text change needs a fresh cache name; the cache-first handler would otherwise keep serving stale `index.html`, JSON and hashed assets. |
 
 ## Confirmed behaviour
 
@@ -39,14 +40,16 @@ Decisions made while building from `DESIGN.md` and `internal/`, plus what was ve
 - `cargo check --target wasm32-unknown-unknown` — passes with no warnings.
 - `trunk build --release` — passes; `dist/` contains the wasm/js/css bundle plus manifest, both icons, SW and both translation files.
 - `trunk build --release --public-url /makmal-bandul/` — passes; generated asset URLs are `/makmal-bandul/...` as needed for GitHub Pages subpath hosting. The final `dist/` was rebuilt for local root serving.
-- The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v8 all return successfully.
+- The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v9 all return successfully.
 - Pushed to `origin/master` (`Thaza-Kun/makmal-bandul`) as `69674e1`. `.github/workflows/deploy.yml` built with `--public-url /makmal-bandul/` and deployed `dist/` to GitHub Pages; the run succeeded and `https://thaza-kun.github.io/makmal-bandul/` returns 200 with `/makmal-bandul/`-prefixed hashed assets.
 - Physics smoke test caught and fixed a bad revolute-joint anchor (the bob initially snapped straight down instead of swinging).
 - The service worker precaches the hashed JS/WASM/CSS by reading them out of `index.html` at install time; otherwise the very first load would not be available offline until a reload.
+- Browser checks with Playwright/Firefox (390×844 mobile and 1280×900 desktop) passed with no page errors: all four dialogs advance by mouse and keyboard, length input clamps to 1.000 m on blur, dragging the bob changes the release angle (30°→24°) and dragging the handle changes the threshold (5°→19°), the Start button is green and pulsing, the panel is inline above the visualization on mobile and a sticky sidebar on desktop, the pivot HUD sits inside the visualization, zero horizontal overflow, the running view shows the one-sided threshold and wide red Stop, Stop→Confirm→Save reaches the four result cards, the Malay switch translates the panel, and an offline reload works after the service worker activates.
+- Clipboard copy and CSV download were exercised only through their button handlers in code, not in the browser run.
 
 ## Open / unverified
 
-- The updated UI is live at `http://localhost:3096/` for manual visual inspection; no automated browser tool was available here, so the new Start-only flow, collapsible panel, sliding ruler, pivot HUD, bottom controls, touch drag, focus/keyboard operation, clipboard, download and service-worker offline reload are implemented but not visually verified.
+- Screenshots were captured but could not be viewed by this model, so the aesthetic result still needs your eyes in serve or on the Pages URL. Behaviour and layout geometry were checked programmatically as recorded above.
 - `wasm-opt` is disabled (`data-wasm-opt="0"`) because Trunk's download timed out here; the release wasm is ~1.2 MB. `Cargo.toml` already has `lto = true`, `opt-level = "z"` and `codegen-units = 1`. Re-enable wasm-opt when the tool can be fetched.
 - `pendulum_history` is now bounded to a 5-second window. The samples are written but not currently read back by any view — they satisfy the storage requirement only.
 - `internal/best-practices.md` asks for a dev-time `localStorage` text override and hot reload, written for the macroquad `HashMap` approach. With Yew's typed `I18n` context there is no dev server hook, so this was skipped rather than adding an unused override path.

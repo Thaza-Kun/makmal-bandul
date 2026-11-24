@@ -86,6 +86,8 @@
     "releaseHint": "Drag the highlighted bob or the protractor needle, from 5° to 90°.",
     "thresholdTitle": "Set the swing threshold",
     "thresholdHint": "Drag the circle handle on the release side, from 1° to 89°.",
+    "releaseAngleAria": "Release angle",
+    "thresholdAngleAria": "Swing threshold",
     "selectBtn": "Select",
     "completeHint": "Finish the guided setup, then press Start."
   },
