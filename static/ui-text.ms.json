@@ -1,0 +1,81 @@
+{
+  "app": {
+    "title": "Makmal Bandul",
+    "subtitle": "Makmal eksperimen bandul",
+    "langLabel": "Bahasa",
+    "offline": "Berfungsi luar talian",
+    "phase": "Peringkat"
+  },
+  "setup": {
+    "bobTitle": "Pilih bebandul",
+    "bobHint": "Pilih satu bebandul untuk eksperimen ini.",
+    "massLabel": "Jisim",
+    "materialLabel": "Bahan",
+    "lengthTitle": "Panjang tali",
+    "lengthLabel": "Panjang (m)",
+    "lengthHint": "Tarik penanda pada pembaris atau taip panjang 0.100 hingga 1.000 m.",
+    "releaseTitle": "Sudut lepasan",
+    "releaseLabel": "Sudut (°)",
+    "releaseHint": "Tarik jarum pada protraktor atau taip sudut.",
+    "thresholdTitle": "Ambang ayunan",
+    "thresholdLabel": "Sudut (°)",
+    "thresholdHint": "Satu ayunan dikira apabila bebandul melalui sudut ini ke luar pada mana-mana sisi.",
+    "startBtn": "Mula eksperimen",
+    "invalidHint": "Lengkapkan semua medan untuk mula."
+  },
+  "running": {
+    "title": "Eksperimen berjalan",
+    "stopBtn": "Berhenti",
+    "resetBtn": "Tetap semula",
+    "swingCounter": "Ayunan: {count}",
+    "swingLabel": "Ayunan",
+    "timeLabel": "Jam randik",
+    "runningHint": "Jam randik dan pembilang bertambah secara automatik.",
+    "pivotLabel": "Titik pangsi"
+  },
+  "paused": {
+    "title": "Eksperimen dijeda",
+    "resumeBtn": "Sambung",
+    "confirmBtn": "Sahkan bacaan",
+    "resetBtn": "Tetap semula",
+    "frozenHint": "Fizik dan jam randik beku. Sambung apabila anda bersedia.",
+    "swingCounter": "Ayunan: {count}",
+    "swingLabel": "Ayunan"
+  },
+  "confirm": {
+    "title": "Sahkan bacaan",
+    "subtitle": "Semak setiap nilai, kemudian simpan cubaan anda.",
+    "bob": "Bebandul",
+    "length": "Panjang (m)",
+    "releaseAngle": "Sudut lepasan (°)",
+    "time": "Masa (s)",
+    "swings": "Bilangan ayunan",
+    "trial": "Cubaan",
+    "addReading": "Tambah bacaan",
+    "saveBtn": "Simpan & teruskan",
+    "backBtn": "Kembali",
+    "editHint": "Nilai akan dihadkan pada julat alat apabila anda meninggalkan medan.",
+    "noReadings": "Tiada cubaan direkodkan lagi."
+  },
+  "results": {
+    "title": "Keputusan",
+    "summary": "Ringkasan",
+    "period": "Tempoh purata (s)",
+    "gEstimate": "Anggaran g (m/s²)",
+    "error": "Ralat berbanding {reference} m/s²",
+    "trials": "Cubaan dianalisis",
+    "copyJson": "Salin JSON",
+    "downloadCsv": "Muat turun CSV",
+    "newExperiment": "Eksperimen baharu",
+    "referenceG": "9.81"
+  },
+  "common": {
+    "unitMetre": "m",
+    "unitDegree": "°",
+    "unitSecond": "s",
+    "unitKilogram": "kg",
+    "saved": "Disimpan",
+    "copied": "Disalin",
+    "copyFailed": "Gagal menyalin"
+  }
+}

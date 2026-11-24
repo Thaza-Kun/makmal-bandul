@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1020" />
+    <meta name="description" content="Offline-first pendulum experiment lab for measuring g." />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link data-trunk rel="css" href="style.css" />
+    <link data-trunk rel="copy-file" href="static/manifest.json" />
+    <link data-trunk rel="copy-file" href="static/sw.js" />
+    <link data-trunk rel="copy-file" href="static/ui-text.en.json" />
+    <link data-trunk rel="copy-file" href="static/ui-text.ms.json" />
+    <link data-trunk rel="copy-file" href="static/icon-192.png" />
+    <link data-trunk rel="copy-file" href="static/icon-512.png" />
+    <title>Makmal Bandul</title>
+  </head>
+  <body>
+    <link data-trunk rel="rust" data-wasm-opt="0" />
+    <script>
+      // Registration only; all user-facing text lives in ui-text.*.json.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>

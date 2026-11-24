@@ -1,0 +1,81 @@
+{
+  "app": {
+    "title": "Makmal Bandul",
+    "subtitle": "Pendulum experiment lab",
+    "langLabel": "Language",
+    "offline": "Works offline",
+    "phase": "Stage"
+  },
+  "setup": {
+    "bobTitle": "Select pendulum bob",
+    "bobHint": "Choose one bob for this experiment.",
+    "massLabel": "Mass",
+    "materialLabel": "Material",
+    "lengthTitle": "String length",
+    "lengthLabel": "Length (m)",
+    "lengthHint": "Drag the marker on the ruler or type a length from 0.100 to 1.000 m.",
+    "releaseTitle": "Release angle",
+    "releaseLabel": "Angle (°)",
+    "releaseHint": "Drag the needle on the protractor or type an angle.",
+    "thresholdTitle": "Swing threshold",
+    "thresholdLabel": "Angle (°)",
+    "thresholdHint": "A swing is counted when the bob passes this angle outward on either side.",
+    "startBtn": "Start experiment",
+    "invalidHint": "Complete every field to start."
+  },
+  "running": {
+    "title": "Experiment running",
+    "stopBtn": "Stop",
+    "resetBtn": "Reset",
+    "swingCounter": "Swings: {count}",
+    "swingLabel": "Swings",
+    "timeLabel": "Stopwatch",
+    "runningHint": "The stopwatch and counter advance automatically.",
+    "pivotLabel": "Pivot"
+  },
+  "paused": {
+    "title": "Experiment paused",
+    "resumeBtn": "Resume",
+    "confirmBtn": "Confirm readings",
+    "resetBtn": "Reset",
+    "frozenHint": "Physics and stopwatch are frozen. Resume when you are ready.",
+    "swingCounter": "Swings: {count}",
+    "swingLabel": "Swings"
+  },
+  "confirm": {
+    "title": "Confirm readings",
+    "subtitle": "Check each value, then save your trials.",
+    "bob": "Bob",
+    "length": "Length (m)",
+    "releaseAngle": "Release angle (°)",
+    "time": "Time (s)",
+    "swings": "Swing count",
+    "trial": "Trial",
+    "addReading": "Add reading",
+    "saveBtn": "Save & continue",
+    "backBtn": "Back",
+    "editHint": "Values clamp to their instrument range when you leave the field.",
+    "noReadings": "No trials recorded yet."
+  },
+  "results": {
+    "title": "Results",
+    "summary": "Summary",
+    "period": "Mean period (s)",
+    "gEstimate": "Estimated g (m/s²)",
+    "error": "Error vs {reference} m/s²",
+    "trials": "Trials analysed",
+    "copyJson": "Copy JSON",
+    "downloadCsv": "Download CSV",
+    "newExperiment": "New experiment",
+    "referenceG": "9.81"
+  },
+  "common": {
+    "unitMetre": "m",
+    "unitDegree": "°",
+    "unitSecond": "s",
+    "unitKilogram": "kg",
+    "saved": "Saved",
+    "copied": "Copied",
+    "copyFailed": "Could not copy"
+  }
+}
