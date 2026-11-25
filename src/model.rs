@@ -13,25 +13,26 @@ pub enum Phase {
     Results,
 }
 
-/// The first-load wizard; each dialog is completed before the next appears.
+/// The three parameters exposed by the wireframe's Variables modal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SetupDialog {
+pub enum Variable {
     Bob,
     Length,
-    Release,
-    Threshold,
+    Angle,
 }
 
-impl SetupDialog {
-    /// `None` means the sequence is finished and the experiment can start.
-    pub fn next(self) -> Option<Self> {
-        match self {
-            Self::Bob => Some(Self::Length),
-            Self::Length => Some(Self::Release),
-            Self::Release => Some(Self::Threshold),
-            Self::Threshold => None,
-        }
-    }
+/// Which modal is open; `None` leaves the experiment visible.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Modal {
+    Variables,
+    Variable(Variable),
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum VariableRole {
+    #[default]
+    Constant,
+    Manipulated,
 }
 
 impl Phase {
@@ -52,6 +53,12 @@ pub struct Params {
     pub length: f32,
     pub release_angle: f32,
     pub swing_threshold: f32,
+    #[serde(default)]
+    pub bob_role: VariableRole,
+    #[serde(default)]
+    pub length_role: VariableRole,
+    #[serde(default)]
+    pub angle_role: VariableRole,
 }
 
 impl Default for Params {
@@ -61,6 +68,9 @@ impl Default for Params {
             length: Rule::default().current_length,
             release_angle: Protractor::release().current_angle,
             swing_threshold: Protractor::threshold().current_angle,
+            bob_role: VariableRole::Constant,
+            length_role: VariableRole::Constant,
+            angle_role: VariableRole::Constant,
         }
     }
 }
@@ -105,10 +115,14 @@ mod tests {
     }
 
     #[test]
-    fn setup_dialogs_follow_the_guided_order() {
-        assert_eq!(SetupDialog::Bob.next(), Some(SetupDialog::Length));
-        assert_eq!(SetupDialog::Length.next(), Some(SetupDialog::Release));
-        assert_eq!(SetupDialog::Release.next(), Some(SetupDialog::Threshold));
-        assert_eq!(SetupDialog::Threshold.next(), None);
+    fn saved_params_without_roles_stay_constant() {
+        let legacy: Params = serde_json::from_str(
+            r#"{"bob_index":1,"length":0.5,"release_angle":30.0,"swing_threshold":5.0}"#,
+        )
+        .unwrap();
+        assert_eq!(legacy.bob_index, 1);
+        assert_eq!(legacy.bob_role, VariableRole::Constant);
+        assert_eq!(legacy.length_role, VariableRole::Constant);
+        assert_eq!(legacy.angle_role, VariableRole::Constant);
     }
 }

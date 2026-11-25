@@ -114,6 +114,11 @@ mod tests {
         assert_eq!(i18n.t("setup.bobTitle"), "Select pendulum bob");
         assert_eq!(i18n.t("dialogs.selectBtn"), "Select");
         assert_eq!(i18n.t("running.pendulumLabel"), "Pendulum");
+        assert_eq!(i18n.t("variables.title"), "Variables");
+        assert_eq!(
+            i18n.tf("experiment.lengthValue", &[("value", "50".into())]),
+            "Length: 50cm"
+        );
         assert_eq!(
             i18n.tf("running.swingCounter", &[("count", "4".into())]),
             "Swings: 4"

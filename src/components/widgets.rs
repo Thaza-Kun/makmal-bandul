@@ -4,7 +4,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{Element, PointerEvent};
 use yew::prelude::*;
 
-use crate::domain::{format_time, MeasureTool, Protractor as ProtractorTool, Rule, BOB_PRESETS};
+use crate::domain::{MeasureTool, Protractor as ProtractorTool, Rule, BOB_PRESETS};
 use crate::i18n::I18n;
 
 /// SVG attributes need strings; keep the drawing maths in plain f64/f32.
@@ -188,25 +188,26 @@ pub fn ruler(props: &RulerProps) -> Html {
 const PRO_WIDTH: f64 = 340.0;
 const PRO_HEIGHT: f64 = 210.0;
 const PRO_CX: f64 = 170.0;
-const PRO_CY: f64 = 185.0;
+const PRO_CY: f64 = 30.0;
 const PRO_R: f64 = 150.0;
 
 fn pro_point(radius: f64, degrees: f64) -> (f64, f64) {
     let radians = degrees.to_radians();
     (
         PRO_CX + radius * radians.sin(),
-        PRO_CY - radius * radians.cos(),
+        PRO_CY + radius * radians.cos(),
     )
 }
 
 #[derive(Properties, PartialEq)]
 pub struct ProtractorProps {
     pub tool: ProtractorTool,
+    pub bob_index: usize,
     pub label: String,
     pub onchange: Callback<f32>,
 }
 
-/// One-sided arc: the instrument measures a release/threshold angle, not ±.
+/// Inverted protractor: its pivot is the pendulum pivot and its arc hangs below it.
 #[function_component(Protractor)]
 pub fn protractor(props: &ProtractorProps) -> Html {
     let dragging = use_state(|| false);
@@ -222,7 +223,7 @@ pub fn protractor(props: &ProtractorProps) -> Html {
             }
             let local_x = (event.client_x() as f64 - rect.left()) / scale;
             let local_y = (event.client_y() as f64 - rect.top()) / scale;
-            let angle = (local_x - PRO_CX).atan2(PRO_CY - local_y).to_degrees() as f32;
+            let angle = (local_x - PRO_CX).atan2(local_y - PRO_CY).to_degrees() as f32;
             Some(tool.quantize(angle.clamp(tool.min_angle, tool.max_angle)))
         }
     };
@@ -280,7 +281,12 @@ pub fn protractor(props: &ProtractorProps) -> Html {
     let max = tool.max_angle as i32;
     let (start_x, start_y) = pro_point(PRO_R, min as f64);
     let (end_x, end_y) = pro_point(PRO_R, max as f64);
-    let arc = format!("M {start_x} {start_y} A {PRO_R} {PRO_R} 0 0 1 {end_x} {end_y}");
+    let arc = format!("M {start_x} {start_y} A {PRO_R} {PRO_R} 0 0 0 {end_x} {end_y}");
+    let reached = pro_point(PRO_R, tool.current_angle as f64);
+    let reached_arc = format!(
+        "M {start_x} {start_y} A {PRO_R} {PRO_R} 0 0 0 {} {}",
+        reached.0, reached.1
+    );
     let ticks = (min..=max)
         .map(|degree| {
             let long = degree % 15 == 0;
@@ -295,7 +301,9 @@ pub fn protractor(props: &ProtractorProps) -> Html {
             }
         })
         .collect::<Html>();
-    let (nx, ny) = pro_point(PRO_R - 4.0, tool.current_angle as f64);
+    let (bx, by) = pro_point(PRO_R - 14.0, tool.current_angle as f64);
+    let bob = &BOB_PRESETS[props.bob_index.min(BOB_PRESETS.len() - 1)];
+    let bob_radius = 10.0 + bob.radius as f64 * 200.0;
 
     html! {
         <svg
@@ -315,11 +323,15 @@ pub fn protractor(props: &ProtractorProps) -> Html {
             onkeydown={onkey}
         >
             <path d={arc} fill="none" stroke="#8d99ae" stroke-width="12" stroke-linecap="round" />
-            <line x1={px(PRO_CX)} y1={px(PRO_CY)} x2={px(PRO_CX)} y2={px(PRO_CY - PRO_R)} stroke="#8d99ae" stroke-dasharray="4 5" />
+            <line x1={px(PRO_CX)} y1={px(PRO_CY)} x2={px(PRO_CX)} y2={px(PRO_CY + PRO_R)} stroke="#8d99ae" stroke-dasharray="4 5" />
+            { (tool.current_angle > min as f32).then(|| html! {
+                <path d={reached_arc} fill="none" stroke="#ef233c" stroke-width="4" stroke-linecap="round" />
+            }) }
             { ticks }
-            <line x1={px(PRO_CX)} y1={px(PRO_CY)} x2={px(nx)} y2={px(ny)} stroke="#ef233c" stroke-width="5" stroke-linecap="round" />
+            <line x1={px(PRO_CX)} y1={px(PRO_CY)} x2={px(bx)} y2={px(by)} stroke="#8d99ae" stroke-width="4" stroke-linecap="round" />
+            <circle cx={px(bx)} cy={px(by)} r={px(bob_radius)} fill={bob_color(props.bob_index)} stroke="#edf2f4" stroke-width="2" />
             <circle cx={px(PRO_CX)} cy={px(PRO_CY)} r="8" fill="#ef233c" />
-            <text x={px(PRO_CX)} y={px(PRO_HEIGHT - 4.0)} fill="#8d99ae" font-size="13" text-anchor="middle">{ format!("{}°", tool.current_angle) }</text>
+            <text x={px(PRO_CX)} y={px(PRO_HEIGHT - 4.0)} fill="#edf2f4" font-size="13" text-anchor="middle">{ format!("{}°", tool.current_angle) }</text>
         </svg>
     }
 }
@@ -334,22 +346,6 @@ fn bob_xy(length: f32, angle_deg: f32) -> (f64, f64) {
     (PIVOT_X + rod * angle.sin(), PIVOT_Y + rod * angle.cos())
 }
 
-fn snap(value: f32, precision: f32, min: f32, max: f32) -> f32 {
-    ((value / precision).round() * precision).clamp(min, max)
-}
-
-fn angle_from_pointer(event: &PointerEvent) -> Option<f32> {
-    let element = event.current_target()?.dyn_into::<Element>().ok()?;
-    let rect = element.get_bounding_client_rect();
-    let scale = rect.width() / 420.0;
-    if scale <= 0.0 {
-        return None;
-    }
-    let x = (event.client_x() as f64 - rect.left()) / scale;
-    let y = (event.client_y() as f64 - rect.top()) / scale;
-    Some((x - PIVOT_X).atan2(y - PIVOT_Y).to_degrees() as f32)
-}
-
 fn stand() -> Html {
     html! {
         <g opacity="0.55">
@@ -361,145 +357,15 @@ fn stand() -> Html {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-pub enum SetupMode {
-    Angle,
-    Threshold,
-}
-
-#[derive(Properties, PartialEq)]
-pub struct SetupPendulumProps {
-    pub length: f32,
-    pub angle_deg: f32,
-    pub threshold_deg: f32,
-    pub bob_index: usize,
-    pub mode: SetupMode,
-    pub onchange: Callback<f32>,
-}
-
-/// Highlighted pendulum used by dialogs 3 and 4: drag the bob or the threshold handle.
-#[function_component(SetupPendulum)]
-pub fn setup_pendulum(props: &SetupPendulumProps) -> Html {
-    let i18n = use_context::<I18n>().expect("i18n context");
-    let dragging = use_state(|| false);
-    let (min, max, precision) = match props.mode {
-        SetupMode::Angle => (
-            ProtractorTool::release().min_angle,
-            ProtractorTool::release().max_angle,
-            ProtractorTool::release().precision,
-        ),
-        SetupMode::Threshold => (
-            ProtractorTool::threshold().min_angle,
-            ProtractorTool::threshold().max_angle,
-            ProtractorTool::threshold().precision,
-        ),
-    };
-    let current = match props.mode {
-        SetupMode::Angle => props.angle_deg,
-        SetupMode::Threshold => props.threshold_deg,
-    };
-
-    let ondown = {
-        let dragging = dragging.clone();
-        let onchange = props.onchange.clone();
-        move |event: PointerEvent| {
-            if let Some(target) = event.target().and_then(|t| t.dyn_into::<Element>().ok()) {
-                let _ = target.set_pointer_capture(event.pointer_id());
-            }
-            dragging.set(true);
-            if let Some(value) = angle_from_pointer(&event) {
-                onchange.emit(snap(value, precision, min, max));
-            }
-        }
-    };
-    let onmove = {
-        let dragging = dragging.clone();
-        let onchange = props.onchange.clone();
-        move |event: PointerEvent| {
-            if *dragging {
-                if let Some(value) = angle_from_pointer(&event) {
-                    onchange.emit(snap(value, precision, min, max));
-                }
-            }
-        }
-    };
-    let onup = {
-        let dragging = dragging.clone();
-        move |_: PointerEvent| dragging.set(false)
-    };
-    let onkey = {
-        let onchange = props.onchange.clone();
-        move |event: KeyboardEvent| {
-            let delta = match event.key().as_str() {
-                "ArrowUp" | "ArrowRight" => Some(1.0),
-                "ArrowDown" | "ArrowLeft" => Some(-1.0),
-                "Home" => Some(min - current),
-                "End" => Some(max - current),
-                _ => None,
-            };
-            if let Some(delta) = delta {
-                event.prevent_default();
-                onchange.emit(snap(current + delta, precision, min, max));
-            }
-        }
-    };
-
-    let rod = props.length as f64 * PENDULUM_SCALE;
-    let (bx, by) = bob_xy(props.length, props.angle_deg);
-    let bob = &BOB_PRESETS[props.bob_index.min(BOB_PRESETS.len() - 1)];
-    let radius = 12.0 + bob.radius as f64 * 300.0;
-    let (tx, ty) = bob_xy(
-        props.length,
-        match props.mode {
-            SetupMode::Angle => props.angle_deg,
-            SetupMode::Threshold => props.threshold_deg,
-        },
-    );
-
-    html! {
-        <svg
-            class="pendulum-setup highlighted"
-            viewBox="0 0 420 480"
-            xmlns="http://www.w3.org/2000/svg"
-            role="slider"
-            tabindex="0"
-            aria-label={i18n.t(match props.mode {
-                SetupMode::Angle => "dialogs.releaseAngleAria",
-                SetupMode::Threshold => "dialogs.thresholdAngleAria",
-            })}
-            aria-valuemin={px(min)}
-            aria-valuemax={px(max)}
-            aria-valuenow={px(current)}
-            onpointerdown={ondown}
-            onpointermove={onmove}
-            onpointerup={onup.clone()}
-            onpointercancel={onup}
-            onkeydown={onkey}
-        >
-            { stand() }
-            <g class="pendulum-glow">
-                <line x1={px(PIVOT_X)} y1={px(PIVOT_Y)} x2={px(bx)} y2={px(by)} stroke="#ef233c" stroke-width="5" stroke-linecap="round" />
-                <circle cx={px(bx)} cy={px(by)} r={px(radius)} fill={bob_color(props.bob_index)} stroke="#edf2f4" stroke-width="2" />
-            </g>
-            <line x1={px(PIVOT_X)} y1={px(PIVOT_Y)} x2={px(tx)} y2={px(ty)} stroke="#ef233c" stroke-width="2" stroke-dasharray="7 7" />
-            <circle cx={px(tx)} cy={px(ty)} r="11" fill="#ef233c" stroke="#0b1020" stroke-width="3" />
-            <circle cx={px(PIVOT_X)} cy={px(PIVOT_Y)} r="7" fill="#ef233c" />
-            <text x={px(PIVOT_X + rod * (props.threshold_deg.to_radians() as f64).sin() + 16.0)} y={px(PIVOT_Y + rod * (props.threshold_deg.to_radians() as f64).cos())} fill="#ef233c" font-size="15">{ format!("{}°", props.threshold_deg) }</text>
-        </svg>
-    }
-}
-
 #[derive(Properties, PartialEq)]
 pub struct PendulumViewProps {
     pub length: f32,
     pub angle_deg: f32,
     pub threshold_deg: f32,
     pub bob_index: usize,
-    pub time: f32,
-    pub swings: u32,
 }
 
-/// Running view: faded retort stand, one-sided threshold, and a pivot-mounted HUD.
+/// Running view: faded retort stand, one-sided threshold and the swinging bob.
 #[function_component(PendulumView)]
 pub fn pendulum_view(props: &PendulumViewProps) -> Html {
     let i18n = use_context::<I18n>().expect("i18n context");
@@ -518,26 +384,7 @@ pub fn pendulum_view(props: &PendulumViewProps) -> Html {
                 <circle cx={px(bx)} cy={px(by)} r={px(radius)} fill={bob_color(props.bob_index)} stroke="#edf2f4" stroke-width="2" />
                 <circle cx={px(PIVOT_X)} cy={px(PIVOT_Y)} r="7" fill="#ef233c" />
             </svg>
-            <div class="pivot-hud">
-                <StopwatchFace time={props.time} />
-                <span class="pivot-counter" aria-label={i18n.t("running.swingLabel")}>
-                    <strong aria-live="polite">{ props.swings }</strong>
-                </span>
-            </div>
         </div>
-    }
-}
-
-#[derive(Properties, PartialEq)]
-pub struct StopwatchFaceProps {
-    pub time: f32,
-}
-
-#[function_component(StopwatchFace)]
-pub fn stopwatch_face(props: &StopwatchFaceProps) -> Html {
-    let i18n = use_context::<I18n>().expect("i18n context");
-    html! {
-        <span class="pivot-stopwatch" aria-label={i18n.t("running.timeLabel")}>{ format_time(props.time) }</span>
     }
 }
 

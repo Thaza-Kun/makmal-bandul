@@ -41,10 +41,29 @@
     "pivotLabel": "Pivot",
     "pendulumLabel": "Pendulum"
   },
+  "experiment": {
+    "title": "Experiment",
+    "stopwatch": "Stopwatch",
+    "count": "Count",
+    "lengthValue": "Length: {value}cm",
+    "angleValue": "Angle: {value}°"
+  },
+  "variables": {
+    "title": "Variables",
+    "bob": "Bob",
+    "length": "Length",
+    "angle": "Release Angle",
+    "closeBtn": "Close",
+    "saveBtn": "Save",
+    "roleHeading": "Constant / Manipulated",
+    "constant": "Constant",
+    "manipulated": "Manipulated"
+  },
   "paused": {
     "title": "Experiment paused",
     "resumeBtn": "Resume",
     "confirmBtn": "Confirm readings",
+    "confirmShort": "Confirm",
     "resetBtn": "Reset",
     "frozenHint": "Physics and stopwatch are frozen. Resume when you are ready.",
     "swingCounter": "Swings: {count}",
@@ -96,6 +115,9 @@
     "unitDegree": "°",
     "unitSecond": "s",
     "unitKilogram": "kg",
+    "unitGram": "g",
+    "increase": "Increase",
+    "decrease": "Decrease",
     "increment": "Increase by 1 mm",
     "decrement": "Decrease by 1 mm",
     "saved": "Saved",

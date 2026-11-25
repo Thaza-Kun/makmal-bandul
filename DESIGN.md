@@ -1,9 +1,9 @@
 # Design Document
 
-This document is split into modular files in `internal/`:
+This document is split into modular files in `specs/`:
 
-- [Deployment](internal/deployment.md)
-- [User Workflow](internal/user-workflow.md)
-- [Domain Model](internal/domain-model.md)
-- [Core Crates](internal/crates.md)
-- [Best Practices](internal/best-practices.md)
+- [Deployment](specs/deployment/deployment.md)
+- [User Journey](specs/ui/user-journey.md)
+- [Domain Model](specs/backend/domain-model.md)
+- [Core Crates](specs/backend/crates.md)
+- [Best Practices](specs/backend/best-practices.md)

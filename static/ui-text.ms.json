@@ -41,10 +41,29 @@
     "pivotLabel": "Titik pangsi",
     "pendulumLabel": "Bandul"
   },
+  "experiment": {
+    "title": "Eksperimen",
+    "stopwatch": "Jam randik",
+    "count": "Bilangan",
+    "lengthValue": "Panjang: {value}cm",
+    "angleValue": "Sudut: {value}°"
+  },
+  "variables": {
+    "title": "Pembolehubah",
+    "bob": "Bebandul",
+    "length": "Panjang",
+    "angle": "Sudut lepasan",
+    "closeBtn": "Tutup",
+    "saveBtn": "Simpan",
+    "roleHeading": "Pemalar / Dimanipulasi",
+    "constant": "Pemalar",
+    "manipulated": "Dimanipulasi"
+  },
   "paused": {
     "title": "Eksperimen dijeda",
     "resumeBtn": "Sambung",
     "confirmBtn": "Sahkan bacaan",
+    "confirmShort": "Sahkan",
     "resetBtn": "Tetap semula",
     "frozenHint": "Fizik dan jam randik beku. Sambung apabila anda bersedia.",
     "swingCounter": "Ayunan: {count}",
@@ -96,6 +115,9 @@
     "unitDegree": "°",
     "unitSecond": "s",
     "unitKilogram": "kg",
+    "unitGram": "g",
+    "increase": "Tambah",
+    "decrease": "Kurang",
     "increment": "Tambah 1 mm",
     "decrement": "Kurang 1 mm",
     "saved": "Disimpan",

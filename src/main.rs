@@ -14,11 +14,11 @@ use web_sys::{window, Event};
 use yew::prelude::*;
 
 use components::{
-    confirm::ConfirmModal, dialogs::SetupDialogs, results::ResultsPanel, run::RunPanel,
-    setup::SetupPanel,
+    confirm::ConfirmModal, dialogs::VariableModal, results::ResultsPanel, run::ExperimentView,
+    setup::VariablesModal,
 };
 use domain::{MeasureTool, Protractor, Rule, Stopwatch, BOB_PRESETS};
-use model::{ConfirmRow, Params, Phase, SetupDialog};
+use model::{ConfirmRow, Modal, Params, Phase, Variable};
 use physics::{Simulation, FIXED_DT};
 use storage::{record_swing, SwingSample, HISTORY_KEY, PARAMS_KEY, READINGS_KEY};
 
@@ -33,7 +33,7 @@ fn main() {
 fn app() -> Html {
     let i18n = use_state(i18n::I18n::embedded);
     let phase = use_state(|| Phase::Setup);
-    let dialog = use_state(|| Some(SetupDialog::Bob));
+    let modal = use_state(|| None::<Modal>);
     let params = use_state(|| {
         storage::load::<Params>(PARAMS_KEY)
             .filter(|params| params.valid())
@@ -159,26 +159,6 @@ fn app() -> Html {
         let phase = phase.clone();
         move |_| phase.set(Phase::Paused)
     };
-    let onresume = {
-        let phase = phase.clone();
-        move |_| phase.set(Phase::Running)
-    };
-    let onreset = {
-        let simulation = simulation.clone();
-        let rows = rows.clone();
-        let adding = adding.clone();
-        let dialog = dialog.clone();
-        let phase = phase.clone();
-        let tick = tick.clone();
-        move |_| {
-            *simulation.borrow_mut() = None;
-            rows.set(Vec::new());
-            adding.set(false);
-            dialog.set(Some(SetupDialog::Bob));
-            tick.set(*tick + 1);
-            phase.set(Phase::Setup);
-        }
-    };
     let onconfirm = {
         let simulation = simulation.clone();
         let params = params.clone();
@@ -245,6 +225,22 @@ fn app() -> Html {
             phase.set(Phase::Results);
         }
     };
+    let onnew = {
+        let simulation = simulation.clone();
+        let rows = rows.clone();
+        let adding = adding.clone();
+        let modal = modal.clone();
+        let phase = phase.clone();
+        let tick = tick.clone();
+        move |_| {
+            *simulation.borrow_mut() = None;
+            rows.set(Vec::new());
+            adding.set(false);
+            modal.set(None);
+            tick.set(*tick + 1);
+            phase.set(Phase::Setup);
+        }
+    };
     let onlang = {
         let i18n = i18n.clone();
         move |event: Event| {
@@ -262,96 +258,62 @@ fn app() -> Html {
         }
     };
 
-    let onbob = {
-        let dialog = dialog.clone();
+    let onsetup = {
+        let modal = modal.clone();
         let phase = phase.clone();
         move |_| {
             if *phase == Phase::Running {
                 phase.set(Phase::Paused);
             }
-            dialog.set(Some(SetupDialog::Bob));
+            modal.set(Some(Modal::Variables));
         }
     };
-    let onlength = {
-        let dialog = dialog.clone();
-        let phase = phase.clone();
-        move |_| {
-            if *phase == Phase::Running {
-                phase.set(Phase::Paused);
-            }
-            dialog.set(Some(SetupDialog::Length));
-        }
+    let onopenvariable = {
+        let modal = modal.clone();
+        move |variable: Variable| modal.set(Some(Modal::Variable(variable)))
     };
-    let ondialogclose = {
-        let dialog = dialog.clone();
-        move |_| {
-            if let Some(current) = *dialog {
-                dialog.set(current.next());
-            }
-        }
+    let onclosevariable = {
+        let modal = modal.clone();
+        move |_| modal.set(Some(Modal::Variables))
+    };
+    let onclosemodal = {
+        let modal = modal.clone();
+        move |_| modal.set(None)
     };
 
+    let experiment = html! {
+        <ExperimentView
+            params={(*params).clone()}
+            {angle_deg} {time} {swings}
+        />
+    };
     let screen = match *phase {
-        Phase::Setup => html! {
-            <section class="phase-panel">
-                <p class="hint">{ i18n.t("dialogs.completeHint") }</p>
-            </section>
-        },
-        Phase::Running | Phase::Paused => html! {
-            <RunPanel
-                params={(*params).clone()}
-                {angle_deg} {time} {swings}
-                paused={*phase == Phase::Paused}
-                {onstop} {onresume} {onconfirm} {onreset}
-            />
-        },
-        Phase::Confirming => html! {
-            <>
-                <div class="phase-panel">
-                    <RunPanel
-                        params={(*params).clone()}
-                        {angle_deg} {time} {swings}
-                        paused={true}
-                        {onstop} {onresume} {onconfirm} {onreset}
-                    />
-                </div>
-                <ConfirmModal
-                    rows={(*rows).clone()}
-                    onrows={{
-                        let rows = rows.clone();
-                        move |next| rows.set(next)
-                    }}
-                    {onadd}
-                    onback={{
-                        let phase = phase.clone();
-                        move |_| phase.set(Phase::Paused)
-                    }}
-                    {onsave}
-                />
-            </>
-        },
         Phase::Results => html! {
             <ResultsPanel
                 rows={(*rows).clone()}
                 params={(*params).clone()}
-                tonew={{
-                    let simulation = simulation.clone();
-                    let rows = rows.clone();
-                    let adding = adding.clone();
-                    let dialog = dialog.clone();
-                    let phase = phase.clone();
-                    let tick = tick.clone();
-                    move |_| {
-                        *simulation.borrow_mut() = None;
-                        rows.set(Vec::new());
-                        adding.set(false);
-                        dialog.set(Some(SetupDialog::Bob));
-                        tick.set(*tick + 1);
-                        phase.set(Phase::Setup);
-                    }
-                }}
+                tonew={onnew.clone()}
             />
         },
+        _ => experiment,
+    };
+
+    let (action_label, action_class, action) = match *phase {
+        Phase::Running => (
+            i18n.t("running.stopBtn"),
+            "btn action stop",
+            Callback::from(onstop.clone()),
+        ),
+        Phase::Results => (
+            i18n.t("results.newExperiment"),
+            "btn action primary",
+            Callback::from(onnew.clone()),
+        ),
+        _ => (
+            i18n.t("setup.startBtn"),
+            "btn action start",
+            Callback::from(onstart.clone()),
+        ),
     };
 
     html! {
@@ -371,26 +333,65 @@ fn app() -> Html {
                         <option value="ms">{"MS"}</option>
                     </select>
                 </header>
-                <div class="workspace">
-                    <SetupPanel
-                        params={(*params).clone()}
-                        {onbob}
-                        {onlength}
-                        {onstart}
-                    />
-                    <main>{ screen }</main>
-                </div>
-                { dialog.as_ref().map(|current| html! {
-                    <SetupDialogs
-                        dialog={*current}
-                        params={(*params).clone()}
-                        onparams={{
-                            let params = params.clone();
-                            move |next| params.set(next)
+                <main>{ screen }</main>
+
+                <footer class="bottombar">
+                    <button type="button" id="setup-btn" class="btn small" onclick={onsetup.clone()}>
+                        { i18n.t("setup.panelTitle") }
+                    </button>
+                    { matches!(*phase, Phase::Paused | Phase::Confirming).then(|| html! {
+                        <button type="button" class="btn small confirm-btn" onclick={{
+                            let onconfirm = onconfirm.clone();
+                            move |_| onconfirm(())
+                        }}>{ i18n.t("paused.confirmShort") }</button>
+                    }) }
+                    { matches!(*phase, Phase::Running | Phase::Paused | Phase::Confirming).then(|| html! {
+                        <button type="button" class="btn small danger" onclick={{
+                            let onnew = onnew.clone();
+                            move |_| onnew(())
+                        }}>{ i18n.t("running.resetBtn") }</button>
+                    }) }
+                    <button type="button" id="primary-action" class={action_class} onclick={move |_| action.emit(())}>
+                        { action_label }
+                    </button>
+                </footer>
+
+                { (*phase == Phase::Confirming).then(|| html! {
+                    <ConfirmModal
+                        rows={(*rows).clone()}
+                        onrows={{
+                            let rows = rows.clone();
+                            move |next| rows.set(next)
                         }}
-                        onclose={ondialogclose.clone()}
+                        onadd={onadd.clone()}
+                        onback={{
+                            let phase = phase.clone();
+                            move |_| phase.set(Phase::Paused)
+                        }}
+                        {onsave}
                     />
                 }) }
+                { match *modal {
+                    Some(Modal::Variables) => html! {
+                        <VariablesModal
+                            params={(*params).clone()}
+                            onopen={onopenvariable.clone()}
+                            onclose={onclosemodal.clone()}
+                        />
+                    },
+                    Some(Modal::Variable(variable)) => html! {
+                        <VariableModal
+                            {variable}
+                            params={(*params).clone()}
+                            onparams={{
+                                let params = params.clone();
+                                move |next| params.set(next)
+                            }}
+                            onclose={onclosevariable.clone()}
+                        />
+                    },
+                    None => html! {},
+                } }
             </div>
         </ContextProvider<i18n::I18n>>
     }
