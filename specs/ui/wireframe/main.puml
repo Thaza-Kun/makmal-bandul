@@ -1,0 +1,9 @@
+@startsalt
+{
+  {==sticky topbar "experimental name"== 🌐}
+  {==main (see experiment-setup.puml)==}
+  {==sticky bottom (persistent across all states)==}
+  {+ ⚙ setting | confirm | reset }
+  {+ [start stop] }
+}
+@endsalt

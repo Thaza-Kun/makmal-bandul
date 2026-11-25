@@ -143,16 +143,16 @@ main { padding-top: 4px; }
   transform: translateX(-50%);
   z-index: 20;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
   width: min(100%, 1180px);
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
   background: var(--bg);
   border-top: 1px solid var(--line);
 }
-.bottombar .btn { flex: 1 1 auto; min-height: 48px; padding: 8px 10px; font-size: 0.85rem; }
-.bottombar .btn.action { flex: 2 1 140px; min-height: 52px; font-size: 1rem; }
+.bar-row { display: flex; gap: 8px; width: 100%; }
+.bottombar .btn { flex: 1 1 0; min-height: 48px; padding: 8px 10px; font-size: 0.85rem; }
+.bottombar .btn.action { flex: 1 1 100%; min-height: 52px; font-size: 1rem; }
 .btn.action.start { background: var(--go); color: #0b1020; border-color: var(--go); }
 .btn.action.stop { background: var(--danger); color: var(--text); border-color: var(--danger); }
 .btn.action { animation: start-pulse 2s ease-in-out infinite; }

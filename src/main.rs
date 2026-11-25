@@ -333,25 +333,35 @@ fn app() -> Html {
                 </header>
                 <main>{ screen }</main>
 
-                <footer class="bottombar">
-                    <button type="button" id="setup-btn" class="btn small" onclick={onsetup.clone()}>
-                        { i18n.t("setup.panelTitle") }
-                    </button>
-                    { matches!(*phase, Phase::Paused | Phase::Confirming).then(|| html! {
-                        <button type="button" class="btn small confirm-btn" onclick={{
-                            let onconfirm = onconfirm.clone();
-                            move |_| onconfirm(())
-                        }}>{ i18n.t("paused.confirmShort") }</button>
-                    }) }
-                    { matches!(*phase, Phase::Running | Phase::Paused | Phase::Confirming).then(|| html! {
-                        <button type="button" class="btn small danger" onclick={{
-                            let onnew = onnew.clone();
-                            move |_| onnew(())
-                        }}>{ i18n.t("running.resetBtn") }</button>
-                    }) }
-                    <button type="button" id="primary-action" class={action_class} onclick={move |_| action.emit(())}>
-                        { action_label }
-                    </button>
+                <footer class="bottombar" aria-label={i18n.t("app.controls")}>
+                    <div class="bar-row">
+                        <button type="button" id="setup-btn" class="btn small" onclick={onsetup.clone()}>
+                            <span aria-hidden="true">{ "⚙ " }</span>{ i18n.t("setup.panelTitle") }
+                        </button>
+                        <button
+                            type="button"
+                            class="btn small confirm-btn"
+                            disabled={!matches!(*phase, Phase::Paused | Phase::Confirming)}
+                            onclick={{
+                                let onconfirm = onconfirm.clone();
+                                move |_| onconfirm(())
+                            }}
+                        >{ i18n.t("paused.confirmShort") }</button>
+                        <button
+                            type="button"
+                            class="btn small danger"
+                            disabled={!matches!(*phase, Phase::Running | Phase::Paused | Phase::Confirming)}
+                            onclick={{
+                                let onnew = onnew.clone();
+                                move |_| onnew(())
+                            }}
+                        >{ i18n.t("running.resetBtn") }</button>
+                    </div>
+                    <div class="bar-row">
+                        <button type="button" id="primary-action" class={action_class} onclick={move |_| action.emit(())}>
+                            { action_label }
+                        </button>
+                    </div>
                 </footer>
 
                 { (*phase == Phase::Confirming).then(|| html! {

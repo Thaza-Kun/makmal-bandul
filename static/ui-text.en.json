@@ -4,7 +4,8 @@
     "subtitle": "Pendulum experiment lab",
     "langLabel": "Language",
     "offline": "Works offline",
-    "phase": "Stage"
+    "phase": "Stage",
+    "controls": "Experiment controls"
   },
   "setup": {
     "bobTitle": "Select pendulum bob",

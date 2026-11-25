@@ -1,0 +1,10 @@
+@startsalt
+{
+  {== Values (center-x, top) ==}
+  { Stopwatch | Count }
+  .
+  .
+  {== Pendulum (center-x, center-y) ==}
+  { Length: 50cm | Angle: 30° }
+}
+@endsalt

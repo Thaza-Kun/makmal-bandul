@@ -70,7 +70,7 @@ Snapshot of the implemented UI (`src/main.rs`, `src/components/`, `style.css`). 
   { 1 Bob: [100g] [30g] [20g] }
   { 2 Length: [−] <ruler, 1 mm divisions> [+] | Length (m) [0.500] }
   { 3 Release: highlighted pendulum (drag bob) | protractor | Angle (°) [30] }
-  { 4 Threshold: highlighted pendulum (drag circle) | protractor | Angle (°) [5] }
+  { 4 Threshold: highlighted pendulum | protractor | Angle (°) [5] }
   { [Select] -> next dialog; after 4 -> Setup with Start enabled }
 }
 @endsalt

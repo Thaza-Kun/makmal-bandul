@@ -4,7 +4,8 @@
     "subtitle": "Makmal eksperimen bandul",
     "langLabel": "Bahasa",
     "offline": "Berfungsi luar talian",
-    "phase": "Peringkat"
+    "phase": "Peringkat",
+    "controls": "Kawalan eksperimen"
   },
   "setup": {
     "bobTitle": "Pilih bebandul",

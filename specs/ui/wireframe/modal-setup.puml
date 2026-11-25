@@ -1,0 +1,9 @@
+@startsalt
+{
+  {== Variables (dynamic list) ==}
+  { 🔓 Bob | 100g }
+  { 🔒 Length | 0.500 m }
+  { 🔓 Release Angle | 30° }
+  { [Close] }
+}
+@endsalt

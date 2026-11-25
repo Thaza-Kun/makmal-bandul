@@ -1,0 +1,9 @@
+@startsalt
+{
+  {==visual tool==}
+  { "-" | "value inputable" | "+" }
+  {==toggle constant/manipulated==}
+  { [toggle] variable }
+  { [save] }
+}
+@endsalt

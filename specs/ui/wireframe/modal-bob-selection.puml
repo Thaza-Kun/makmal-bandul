@@ -1,0 +1,7 @@
+@startsalt
+{
+  {== Select Bob ==}
+  { "100g" | "30g" | "20g" }
+  { [Save] }
+}
+@endsalt

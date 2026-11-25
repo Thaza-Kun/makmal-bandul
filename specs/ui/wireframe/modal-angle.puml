@@ -1,0 +1,9 @@
+@startsalt
+{
+  {== Upside-down protractor (pivoted on pendulum pivot) ==}
+  { "-" | "30°" | "+" }
+  {==toggle constant/manipulated==}
+  { [toggle] angle }
+  { [save] }
+}
+@endsalt
