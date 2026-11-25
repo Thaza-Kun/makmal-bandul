@@ -1,3 +1,5 @@
+> Actual workspace: the root `makmal-bandul` package is the UI crate and `crates/pendulum-engine` is the engine crate. This document predates that layout; see `REVIEWS.md`.
+
 ### Workspace Structure
 ```
 pendulum-experiment/

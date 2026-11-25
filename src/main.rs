@@ -1,10 +1,8 @@
 mod components;
-mod domain;
 mod i18n;
-mod model;
-mod physics;
-mod results;
 mod storage;
+
+pub use pendulum_engine::{domain, model, physics, results};
 
 use std::cell::RefCell;
 use std::rc::Rc;

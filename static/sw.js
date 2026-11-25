@@ -1,6 +1,6 @@
 // Offline shell. Hashed WASM/JS/CSS assets are discovered from index.html at
 // install time, so their build-dependent names never appear here.
-const CACHE = 'makmal-bandul-v10';
+const CACHE = 'makmal-bandul-v11';
 const SHELL = [
   './',
   './index.html',

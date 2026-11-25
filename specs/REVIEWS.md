@@ -32,21 +32,24 @@ Decisions made while building from `DESIGN.md` and `specs/`, plus what was verif
 | Angle modal | Upright protractor plus a separate draggable pendulum slider | One upside-down protractor SVG pivoted at the top, arc hanging below with the bob on it | The wireframe asks for a single upside-down tool pivoted on the pendulum pivot; drag and keyboard still set the release angle. |
 | PWA colours | Palette from `internal/palette.css` | `theme-color` in `index.html` and both colours in `manifest.json` changed to Space Indigo `#2b2d42` | The browser/install UI still used the old navy, clashing with the rest of the app. |
 | Accessibility labels | No hardcoded strings in Rust/WASM | `aria-label` for the pendulum, release and threshold sliders moved into both translation bundles | Browser checks found three English labels still embedded in Rust; they are now translatable like every other string. |
-| Offline cache | Cache `pkg/*` | `dist/` with hashed assets discovered from `index.html`; cache name bumped to `makmal-bandul-v10` | Each visible bundle/text change needs a fresh cache name; the cache-first handler would otherwise keep serving stale `index.html`, JSON and hashed assets. |
+| Offline cache | Cache `pkg/*` | `dist/` with hashed assets discovered from `index.html`; cache name bumped to `makmal-bandul-v11` | Each visible bundle/text change needs a fresh cache name; the cache-first handler would otherwise keep serving stale `index.html`, JSON and hashed assets. |
+| Crate split | Separate `pendulum-core` and `pendulum-ui` workspace crates | Root `makmal-bandul` package is the UI binary; `crates/pendulum-engine` holds domain, model, physics and results | Splits browser-independent code from Yew/DOM code while leaving Trunk's root target, static assets and deploy workflow untouched. |
 
 ## Confirmed behaviour
 
 - `cargo fmt --check` — clean.
-- `cargo test --target x86_64-unknown-linux-gnu` — 19/19 pass: deterministic physics, one-sided return-swing count, legacy params without roles, nearest-bob lookup for typed mass, bob mass labels, precision formatting, clamping, period/g calculation, CSV/JSON export, 5-second swing-history pruning, i18n lookup and trial insertion.
+- `cargo test --target x86_64-unknown-linux-gnu` — 19/19 pass (6 UI + 13 engine): deterministic physics, one-sided return-swing count, legacy params without roles, nearest-bob lookup for typed mass, bob mass labels, precision formatting, clamping, period/g calculation, CSV/JSON export, 5-second swing-history pruning, i18n lookup and trial insertion.
 - `cargo check --target wasm32-unknown-unknown` — passes with no warnings.
 - `trunk build --release` — passes; `dist/` contains the wasm/js/css bundle plus manifest, both icons, SW and both translation files.
 - `trunk build --release --public-url /makmal-bandul/` — passes; generated asset URLs are `/makmal-bandul/...` as needed for GitHub Pages subpath hosting. The final `dist/` was rebuilt for local root serving.
-- The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v10 all return successfully.
+- The updated bundle is served at `http://localhost:3096/`; `index.html`, hashed CSS/JS/WASM, both translation files and `sw.js` v11 all return successfully.
 - Pushed to `origin/master` (`Thaza-Kun/makmal-bandul`) as `69674e1`. `.github/workflows/deploy.yml` built with `--public-url /makmal-bandul/` and deployed `dist/` to GitHub Pages; the run succeeded and `https://thaza-kun.github.io/makmal-bandul/` returns 200 with `/makmal-bandul/`-prefixed hashed assets.
 - The wireframe UI was pushed as `4d7d06a`; the Pages workflow succeeded again and the live URL returns 200.
+- The workspace has two packages: `makmal-bandul` (UI binary) and `pendulum-engine` (engine library). The UI depends on the engine; the engine depends only on `rapier2d`, `serde` and `serde_json`.
 - Physics smoke test caught and fixed a bad revolute-joint anchor (the bob initially snapped straight down instead of swinging).
 - The service worker precaches the hashed JS/WASM/CSS by reading them out of `index.html` at install time; otherwise the very first load would not be available offline until a reload.
 - Browser checks with Playwright/Firefox (390×844 and 1280×900) passed with no page errors: no dialog on load, Values (Stopwatch/Count) and Length/Angle readouts centred above/below the pendulum, bottom bar pinned to the viewport on both sizes, zero horizontal overflow, Setup opens the three-row Variables list, the Bob/Length/Angle modals provide visual tools plus −/input/+, the role toggle persists to `pendulum_params`, length input clamps to 0.700 m, dragging the inverted protractor changes the angle (30°→14°), Start→Stop→Confirm→Save reaches the four result cards, Confirm/Reset stay reachable in the bottom bar, the Malay switch translates the modal, and an offline reload works after the service worker activates.
+- After the crate split, the same Firefox smoke flow passed with no page errors and `sw.js` reports v11.
 - Clipboard copy and CSV download were exercised only through their button handlers in code, not in the browser run.
 
 ## Open / unverified
